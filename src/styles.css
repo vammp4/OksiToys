@@ -119,6 +119,8 @@
 
   html {
     scroll-behavior: smooth;
+    /* Match body so iOS/Android rubber-band never shows default white "gutters". */
+    background: var(--gradient-warm);
   }
 
   body {
@@ -128,6 +130,7 @@
     font-feature-settings: "ss01", "cv11";
     -webkit-font-smoothing: antialiased;
     overflow-x: hidden;
+    overscroll-behavior-x: none;
   }
 
   h1,

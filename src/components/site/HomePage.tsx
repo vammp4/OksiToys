@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { dict, type Lang } from "@/lib/i18n";
+import { fetchHomePage, pickLocalized } from "@/lib/sanity/queries";
+import { urlForImage } from "@/lib/sanity/image";
 import { Header } from "./Header";
 import logo from "@/assets/brand-logo.png";
 import unicorn from "@/assets/toy-unicorn.png";
@@ -73,6 +75,8 @@ const products = [
   },
 ];
 
+type HomePageContent = Awaited<ReturnType<typeof fetchHomePage>>;
+
 function useScrollReveal() {
   useEffect(() => {
     const elements = Array.from(document.querySelectorAll<HTMLElement>("[data-reveal]"));
@@ -100,18 +104,24 @@ function useScrollReveal() {
   }, []);
 }
 
-export function HomePage({ lang }: { lang: Lang }) {
+export function HomePage({ lang, content }: { lang: Lang; content?: HomePageContent | null }) {
   const t = dict[lang];
   const heroRef = useRef<HTMLDivElement>(null);
+  const lookbookFromSanity =
+    content?.lookbook?.filter((i) => i.active !== false && i.image) ?? null;
+  const lookbook = lookbookFromSanity?.length ? lookbookFromSanity : null;
   const [activeProductIndex, setActiveProductIndex] = useState(0);
-  const activeProduct = products[activeProductIndex];
+  const activeProductLocal = products[activeProductIndex];
+  const activeProductSanity = lookbook ? lookbook[activeProductIndex] : null;
 
   const showPreviousProduct = () => {
-    setActiveProductIndex((current) => (current === 0 ? products.length - 1 : current - 1));
+    const length = lookbook ? lookbook.length : products.length;
+    setActiveProductIndex((current) => (current === 0 ? length - 1 : current - 1));
   };
 
   const showNextProduct = () => {
-    setActiveProductIndex((current) => (current === products.length - 1 ? 0 : current + 1));
+    const length = lookbook ? lookbook.length : products.length;
+    setActiveProductIndex((current) => (current === length - 1 ? 0 : current + 1));
   };
 
   useScrollReveal();
@@ -232,8 +242,8 @@ export function HomePage({ lang }: { lang: Lang }) {
         </div>
       </section>
 
-      <section id="collection" className="relative py-10 sm:py-20 md:py-28">
-        <div className="pointer-events-none absolute -top-10 left-1/2 h-24 w-[36rem] -translate-x-1/2 rounded-full bg-gradient-soft opacity-40 blur-2xl" />
+      <section id="collection" className="relative overflow-x-hidden py-10 sm:py-20 md:py-28">
+        <div className="pointer-events-none absolute -top-10 left-1/2 h-24 w-full max-w-[36rem] -translate-x-1/2 rounded-full bg-gradient-soft opacity-40 blur-2xl" />
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6">
           <div
             className="mb-6 flex flex-wrap items-end justify-between gap-4 sm:mb-14 sm:gap-6"
@@ -253,10 +263,10 @@ export function HomePage({ lang }: { lang: Lang }) {
                 </div>
               </div>
               <h2 className="max-w-xl text-balance font-display text-3xl leading-tight sm:text-4xl md:text-5xl">
-                {t.featured.title}
+                {pickLocalized(content?.copy?.featuredTitle, lang) ?? t.featured.title}
               </h2>
               <p className="mt-2 max-w-md text-sm text-muted-foreground sm:mt-3 sm:text-base">
-                {t.featured.sub}
+                {pickLocalized(content?.copy?.featuredSub, lang) ?? t.featured.sub}
               </p>
             </div>
             <div className="divider-stitch hidden flex-1 md:block" />
@@ -266,15 +276,25 @@ export function HomePage({ lang }: { lang: Lang }) {
             <div className="mobile-lookbook overflow-hidden rounded-[1.5rem] border border-border/70 bg-card/80 p-3 shadow-soft backdrop-blur">
               <div className="relative overflow-hidden rounded-[1.2rem] bg-secondary">
                 <img
-                  key={activeProduct.img}
-                  src={activeProduct.img}
-                  alt={activeProduct.name[lang]}
+                  key={lookbook ? activeProductSanity?._key : activeProductLocal.img}
+                  src={
+                    lookbook && activeProductSanity?.image
+                      ? urlForImage(activeProductSanity.image).width(1200).height(800).fit("crop").url()
+                      : activeProductLocal.img
+                  }
+                  alt={
+                    lookbook && activeProductSanity
+                      ? pickLocalized(activeProductSanity.name, lang) ?? "OksiToys lookbook item"
+                      : activeProductLocal.name[lang]
+                  }
                   className="mobile-lookbook-image h-64 w-full object-cover"
                   loading="lazy"
                   decoding="async"
                 />
                 <span className="absolute left-3 top-3 rounded-full bg-card/90 px-3 py-1 text-[10px] uppercase tracking-widest text-foreground/70 backdrop-blur">
-                  {activeProduct.tag[lang]}
+                  {lookbook && activeProductSanity
+                    ? pickLocalized(activeProductSanity.tag, lang) ?? ""
+                    : activeProductLocal.tag[lang]}
                 </span>
 
                 <button
@@ -298,20 +318,22 @@ export function HomePage({ lang }: { lang: Lang }) {
               <div className="flex items-end justify-between gap-4 px-1 pt-4">
                 <div>
                   <h3 className="font-display text-2xl leading-tight">
-                    {activeProduct.name[lang]}
+                    {lookbook && activeProductSanity
+                      ? pickLocalized(activeProductSanity.name, lang) ?? ""
+                      : activeProductLocal.name[lang]}
                   </h3>
                   <p className="mt-1 text-xs text-muted-foreground">Handmade · OksiToys</p>
                 </div>
                 <span className="shrink-0 text-xs font-medium text-primary">
                   {String(activeProductIndex + 1).padStart(2, "0")} /{" "}
-                  {String(products.length).padStart(2, "0")}
+                  {String((lookbook ? lookbook.length : products.length) || 0).padStart(2, "0")}
                 </span>
               </div>
 
               <div className="mt-4 grid grid-cols-6 gap-2">
-                {products.map((product, i) => (
+                {(lookbook ?? products).map((product: any, i: number) => (
                   <button
-                    key={product.img}
+                    key={lookbook ? product._key : product.img}
                     type="button"
                     aria-label={`Show toy ${i + 1}`}
                     aria-pressed={i === activeProductIndex}
@@ -324,7 +346,11 @@ export function HomePage({ lang }: { lang: Lang }) {
                     }
                   >
                     <img
-                      src={product.img}
+                      src={
+                        lookbook && product.image
+                          ? urlForImage(product.image).width(300).height(300).fit("crop").url()
+                          : product.img
+                      }
                       alt=""
                       className="h-full w-full object-cover"
                       loading="lazy"
@@ -463,15 +489,18 @@ export function HomePage({ lang }: { lang: Lang }) {
               {t.custom.eyebrow}
             </p>
             <h2 className="mx-auto max-w-3xl text-balance font-display text-3xl sm:text-4xl md:text-6xl">
-              {t.custom.title}
+              {pickLocalized(content?.copy?.customTitle, lang) ?? t.custom.title}
             </h2>
             <p className="mx-auto mt-5 max-w-2xl text-base text-muted-foreground sm:mt-6 sm:text-lg">
-              {t.custom.body}
+              {pickLocalized(content?.copy?.customBody, lang) ?? t.custom.body}
             </p>
           </div>
 
           <div className="mx-auto mt-8 grid max-w-4xl grid-cols-2 gap-2 sm:mt-12 sm:grid-cols-3 sm:gap-4 md:mt-14 md:grid-cols-6">
-            {[bunnyPurple, unicorn, stitch, sheep, puppy, bunnyPair].map((src, i) => (
+            {(content?.customGallery?.length
+              ? content.customGallery
+              : [bunnyPurple, unicorn, stitch, sheep, puppy, bunnyPair]
+            ).map((src: any, i: number) => (
               <div
                 key={i}
                 className="custom-tile aspect-square overflow-hidden rounded-[1.1rem] shadow-soft transition-[transform,box-shadow] duration-500 hover:-translate-y-1 hover:shadow-cozy shimmer-on-hover sm:rounded-2xl"
@@ -479,7 +508,11 @@ export function HomePage({ lang }: { lang: Lang }) {
                 style={{ transitionDelay: `${i * 70}ms` }}
               >
                 <img
-                  src={src}
+                  src={
+                    typeof src === "string"
+                      ? src
+                      : urlForImage(src).width(600).height(600).fit("crop").url()
+                  }
                   alt=""
                   className="h-full w-full object-cover"
                   loading="lazy"
@@ -506,12 +539,13 @@ export function HomePage({ lang }: { lang: Lang }) {
             className="mx-auto max-w-2xl text-balance text-center font-display text-3xl sm:text-4xl md:text-5xl"
             data-reveal
           >
-            {t.reviews.title}
+            {pickLocalized(content?.copy?.reviewsTitle, lang) ?? t.reviews.title}
           </h2>
           <div className="mt-8 grid gap-3 sm:mt-12 sm:gap-5 md:mt-16 md:grid-cols-3 md:gap-6">
-            {t.reviews.list.map((r, i) => (
+            {(content?.reviews?.filter((r) => r.active !== false) ?? t.reviews.list).map(
+              (r: any, i: number) => (
               <figure
-                key={i}
+                key={r._key ?? i}
                 className="review-card rounded-3xl border border-border/70 bg-card p-5 shadow-soft transition-[transform,box-shadow] duration-500 hover:-translate-y-1 hover:shadow-cozy sm:p-7 md:p-8"
                 data-reveal
                 style={{ transitionDelay: `${i * 90}ms` }}
@@ -524,11 +558,14 @@ export function HomePage({ lang }: { lang: Lang }) {
                   ))}
                 </div>
                 <blockquote className="text-balance font-display text-lg leading-snug sm:text-xl">
-                  "{r.q}"
+                  "{pickLocalized(r.quote, lang) ?? r.q}"
                 </blockquote>
-                <figcaption className="mt-6 text-sm text-muted-foreground">- {r.a}</figcaption>
+                <figcaption className="mt-6 text-sm text-muted-foreground">
+                  - {r.author ?? r.a}
+                </figcaption>
               </figure>
-            ))}
+              ),
+            )}
           </div>
         </div>
       </section>

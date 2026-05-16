@@ -1,8 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { HomePage } from "@/components/site/HomePage";
+import { fetchHomePage } from "@/lib/sanity/queries";
 
 export const Route = createFileRoute("/en")({
-  component: () => <HomePage lang="en" />,
+  loader: async () => ({ content: await fetchHomePage() }),
+  component: () => <HomePage lang="en" content={Route.useLoaderData().content} />,
   head: () => ({
     meta: [
       { title: "OksiToys Amigurumi - Handmade crochet plush toys" },

@@ -21,7 +21,7 @@ export function Header({ lang }: { lang: Lang }) {
   ];
 
   return (
-    <header className="site-header sticky top-0 z-50 border-b border-border/60 bg-background/85 backdrop-blur-md md:bg-background/70 md:backdrop-blur-xl">
+    <header className="site-header relative sticky top-0 z-50 border-b border-border/60 bg-background/85 backdrop-blur-md md:bg-background/70 md:backdrop-blur-xl">
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-3 sm:h-20 sm:px-6">
         <Link to={(base || "/") as "/"} className="flex items-center gap-3 group">
           <span className="font-display text-[1.55rem] leading-none tracking-tight sm:text-2xl">
