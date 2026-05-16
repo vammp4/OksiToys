@@ -66,4 +66,3 @@ export function pickLocalized(value: Localized | undefined, lang: Lang): string 
   if (!value) return undefined;
   return value[lang] ?? value.pl ?? value.en ?? value.ua;
 }
-

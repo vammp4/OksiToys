@@ -69,7 +69,7 @@ export const homePage = defineType({
 
     defineField({
       name: "customGallery",
-      title: 'Na zamówienie (gallery)',
+      title: "Na zamówienie (gallery)",
       type: "array",
       of: [
         defineArrayMember({
@@ -136,4 +136,3 @@ export const homePage = defineType({
     prepare: ({ title }) => ({ title: title || "Home Page" }),
   },
 });
-

@@ -7,4 +7,3 @@ const builder = imageUrlBuilder(sanityClient);
 export function urlForImage(source: SanityImageSource) {
   return builder.image(source);
 }
-

@@ -5,7 +5,8 @@ import { visionTool } from "@sanity/vision";
 import { schemaTypes } from "./sanity/schemaTypes";
 
 const projectId = process.env.SANITY_STUDIO_PROJECT_ID || process.env.VITE_SANITY_PROJECT_ID;
-const dataset = process.env.SANITY_STUDIO_DATASET || process.env.VITE_SANITY_DATASET || "production";
+const dataset =
+  process.env.SANITY_STUDIO_DATASET || process.env.VITE_SANITY_DATASET || "production";
 
 if (!projectId) {
   // eslint-disable-next-line no-console
@@ -23,4 +24,3 @@ export default defineConfig({
   plugins: [deskTool(), visionTool()],
   schema: { types: schemaTypes },
 });
-
