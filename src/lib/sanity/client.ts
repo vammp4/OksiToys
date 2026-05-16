@@ -16,10 +16,19 @@ export const sanityConfig = {
   useCdn: (import.meta.env.VITE_SANITY_USE_CDN ?? "true") !== "false",
 } as const;
 
+/** Token only on SSR/server — never bundled for the browser (no VITE_ prefix). */
+function serverToken(): string | undefined {
+  if (import.meta.env.SSR) {
+    return process.env.SANITY_AUTH_TOKEN;
+  }
+  return undefined;
+}
+
 export const sanityClient = createClient({
   projectId: sanityConfig.projectId,
   dataset: sanityConfig.dataset,
   apiVersion: sanityConfig.apiVersion,
   useCdn: sanityConfig.useCdn,
   perspective: "published",
+  token: serverToken(),
 });

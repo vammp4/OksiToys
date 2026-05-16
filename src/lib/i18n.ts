@@ -180,3 +180,8 @@ export const dict = {
 
 export const langs: Lang[] = ["pl", "en", "ua"];
 export const langLabel: Record<Lang, string> = { pl: "PL", en: "EN", ua: "UA" };
+
+export function langFromStaticData(staticData: unknown): Lang {
+  const lang = (staticData as { lang?: Lang } | undefined)?.lang;
+  return lang ?? "pl";
+}

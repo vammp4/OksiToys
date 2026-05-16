@@ -9,86 +9,116 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as UaRouteImport } from './routes/ua'
-import { Route as EnRouteImport } from './routes/en'
-import { Route as IndexRouteImport } from './routes/index'
+import { Route as MarketingRouteImport } from './routes/_marketing'
+import { Route as MarketingIndexRouteImport } from './routes/_marketing/index'
+import { Route as MarketingUaRouteImport } from './routes/_marketing/ua'
+import { Route as MarketingEnRouteImport } from './routes/_marketing/en'
 
-const UaRoute = UaRouteImport.update({
-  id: '/ua',
-  path: '/ua',
+const MarketingRoute = MarketingRouteImport.update({
+  id: '/_marketing',
   getParentRoute: () => rootRouteImport,
 } as any)
-const EnRoute = EnRouteImport.update({
-  id: '/en',
-  path: '/en',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const IndexRoute = IndexRouteImport.update({
+const MarketingIndexRoute = MarketingIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => MarketingRoute,
+} as any)
+const MarketingUaRoute = MarketingUaRouteImport.update({
+  id: '/ua',
+  path: '/ua',
+  getParentRoute: () => MarketingRoute,
+} as any)
+const MarketingEnRoute = MarketingEnRouteImport.update({
+  id: '/en',
+  path: '/en',
+  getParentRoute: () => MarketingRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/en': typeof EnRoute
-  '/ua': typeof UaRoute
+  '/': typeof MarketingIndexRoute
+  '/en': typeof MarketingEnRoute
+  '/ua': typeof MarketingUaRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/en': typeof EnRoute
-  '/ua': typeof UaRoute
+  '/en': typeof MarketingEnRoute
+  '/ua': typeof MarketingUaRoute
+  '/': typeof MarketingIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
-  '/en': typeof EnRoute
-  '/ua': typeof UaRoute
+  '/_marketing': typeof MarketingRouteWithChildren
+  '/_marketing/en': typeof MarketingEnRoute
+  '/_marketing/ua': typeof MarketingUaRoute
+  '/_marketing/': typeof MarketingIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths: '/' | '/en' | '/ua'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/en' | '/ua'
-  id: '__root__' | '/' | '/en' | '/ua'
+  to: '/en' | '/ua' | '/'
+  id:
+    | '__root__'
+    | '/_marketing'
+    | '/_marketing/en'
+    | '/_marketing/ua'
+    | '/_marketing/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
-  EnRoute: typeof EnRoute
-  UaRoute: typeof UaRoute
+  MarketingRoute: typeof MarketingRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/ua': {
-      id: '/ua'
-      path: '/ua'
-      fullPath: '/ua'
-      preLoaderRoute: typeof UaRouteImport
+    '/_marketing': {
+      id: '/_marketing'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof MarketingRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/en': {
-      id: '/en'
-      path: '/en'
-      fullPath: '/en'
-      preLoaderRoute: typeof EnRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/': {
-      id: '/'
+    '/_marketing/': {
+      id: '/_marketing/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof MarketingIndexRouteImport
+      parentRoute: typeof MarketingRoute
+    }
+    '/_marketing/ua': {
+      id: '/_marketing/ua'
+      path: '/ua'
+      fullPath: '/ua'
+      preLoaderRoute: typeof MarketingUaRouteImport
+      parentRoute: typeof MarketingRoute
+    }
+    '/_marketing/en': {
+      id: '/_marketing/en'
+      path: '/en'
+      fullPath: '/en'
+      preLoaderRoute: typeof MarketingEnRouteImport
+      parentRoute: typeof MarketingRoute
     }
   }
 }
 
+interface MarketingRouteChildren {
+  MarketingEnRoute: typeof MarketingEnRoute
+  MarketingUaRoute: typeof MarketingUaRoute
+  MarketingIndexRoute: typeof MarketingIndexRoute
+}
+
+const MarketingRouteChildren: MarketingRouteChildren = {
+  MarketingEnRoute: MarketingEnRoute,
+  MarketingUaRoute: MarketingUaRoute,
+  MarketingIndexRoute: MarketingIndexRoute,
+}
+
+const MarketingRouteWithChildren = MarketingRoute._addFileChildren(
+  MarketingRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
-  EnRoute: EnRoute,
-  UaRoute: UaRoute,
+  MarketingRoute: MarketingRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

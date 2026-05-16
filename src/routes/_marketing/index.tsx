@@ -1,10 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { HomePage } from "@/components/site/HomePage";
-import { fetchHomePage } from "@/lib/sanity/queries";
 
-export const Route = createFileRoute("/")({
-  loader: async () => ({ content: await fetchHomePage() }),
-  component: () => <HomePage lang="pl" content={Route.useLoaderData().content} />,
+export const Route = createFileRoute("/_marketing/")({
+  staticData: { lang: "pl" as const },
+  component: () => null,
   head: () => ({
     meta: [
       { title: "OksiToys Amigurumi - Recznie robione szydelkowe maskotki" },

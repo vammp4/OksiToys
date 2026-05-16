@@ -1,7 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { dict, type Lang } from "@/lib/i18n";
 import { fetchHomePage, pickLocalized } from "@/lib/sanity/queries";
 import { urlForImage } from "@/lib/sanity/image";
+import { useLangTransition } from "@/hooks/use-lang-transition";
+import { cn } from "@/lib/utils";
 import { Header } from "./Header";
 import logo from "@/assets/brand-logo.png";
 import unicorn from "@/assets/toy-unicorn.png";
@@ -77,21 +79,39 @@ const products = [
 
 type HomePageContent = Awaited<ReturnType<typeof fetchHomePage>>;
 
-function useScrollReveal() {
-  useEffect(() => {
+const prevRevealLang = { current: null as Lang | null };
+
+function useScrollReveal(lang: Lang) {
+  useLayoutEffect(() => {
     const elements = Array.from(document.querySelectorAll<HTMLElement>("[data-reveal]"));
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     if (prefersReducedMotion) {
       elements.forEach((element) => element.classList.add("is-visible"));
+      prevRevealLang.current = lang;
       return;
     }
+
+    const isLangSwitch = prevRevealLang.current !== null && prevRevealLang.current !== lang;
+    prevRevealLang.current = lang;
+
+    if (isLangSwitch) {
+      elements.forEach((element) => element.classList.add("is-visible"));
+      return;
+    }
+
+    document.documentElement.classList.add("reveal-enhanced");
+    elements.forEach((element) => element.classList.remove("is-visible"));
+
+    const reveal = (element: Element) => {
+      element.classList.add("is-visible");
+    };
 
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            entry.target.classList.add("is-visible");
+            reveal(entry.target);
             observer.unobserve(entry.target);
           }
         });
@@ -99,13 +119,28 @@ function useScrollReveal() {
       { rootMargin: "0px 0px -12% 0px", threshold: 0.12 },
     );
 
-    elements.forEach((element) => observer.observe(element));
+    const revealIfInView = (element: HTMLElement) => {
+      const rect = element.getBoundingClientRect();
+      const inView =
+        rect.top < window.innerHeight * 0.88 && rect.bottom > window.innerHeight * 0.12;
+      if (inView) {
+        reveal(element);
+        observer.unobserve(element);
+      }
+    };
+
+    elements.forEach((element) => {
+      observer.observe(element);
+      revealIfInView(element);
+    });
+
     return () => observer.disconnect();
-  }, []);
+  }, [lang]);
 }
 
 export function HomePage({ lang, content }: { lang: Lang; content?: HomePageContent | null }) {
-  const t = dict[lang];
+  const { displayLang, phase, isSwitching } = useLangTransition(lang);
+  const t = dict[displayLang];
   const heroRef = useRef<HTMLDivElement>(null);
   const lookbookFromSanity =
     content?.lookbook?.filter((i) => i.active !== false && i.image) ?? null;
@@ -124,7 +159,13 @@ export function HomePage({ lang, content }: { lang: Lang; content?: HomePageCont
     setActiveProductIndex((current) => (current === length - 1 ? 0 : current + 1));
   };
 
-  useScrollReveal();
+  useScrollReveal(lang);
+
+  useLayoutEffect(() => {
+    setActiveProductIndex(0);
+    document.documentElement.lang = lang === "ua" ? "uk" : lang;
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [lang]);
 
   useEffect(() => {
     const hero = heroRef.current;
@@ -165,8 +206,17 @@ export function HomePage({ lang, content }: { lang: Lang; content?: HomePageCont
 
   return (
     <div className="min-h-screen">
-      <Header lang={lang} />
+      <Header lang={lang} displayLang={displayLang} isSwitching={isSwitching} />
 
+      <main
+        className={cn(
+          "lang-switch-surface",
+          phase === "out" && "lang-switch-out",
+          phase === "entering" && "lang-switch-entering",
+        )}
+        aria-busy={isSwitching}
+        aria-live="polite"
+      >
       <section ref={heroRef} className="hero-motion relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-blush opacity-70" />
         <div className="ambient-thread ambient-thread-a" />
@@ -270,10 +320,10 @@ export function HomePage({ lang, content }: { lang: Lang; content?: HomePageCont
                 </div>
               </div>
               <h2 className="max-w-xl text-balance font-display text-3xl leading-tight sm:text-4xl md:text-5xl">
-                {pickLocalized(content?.copy?.featuredTitle, lang) ?? t.featured.title}
+                {pickLocalized(content?.copy?.featuredTitle, displayLang) ?? t.featured.title}
               </h2>
               <p className="mt-2 max-w-md text-sm text-muted-foreground sm:mt-3 sm:text-base">
-                {pickLocalized(content?.copy?.featuredSub, lang) ?? t.featured.sub}
+                {pickLocalized(content?.copy?.featuredSub, displayLang) ?? t.featured.sub}
               </p>
             </div>
             <div className="divider-stitch hidden flex-1 md:block" />
@@ -295,8 +345,8 @@ export function HomePage({ lang, content }: { lang: Lang; content?: HomePageCont
                   }
                   alt={
                     lookbook && activeProductSanity
-                      ? (pickLocalized(activeProductSanity.name, lang) ?? "OksiToys lookbook item")
-                      : activeProductLocal.name[lang]
+                      ? (pickLocalized(activeProductSanity.name, displayLang) ?? "OksiToys lookbook item")
+                      : activeProductLocal.name[displayLang]
                   }
                   className="mobile-lookbook-image h-64 w-full object-cover"
                   loading="lazy"
@@ -304,8 +354,8 @@ export function HomePage({ lang, content }: { lang: Lang; content?: HomePageCont
                 />
                 <span className="absolute left-3 top-3 rounded-full bg-card/90 px-3 py-1 text-[10px] uppercase tracking-widest text-foreground/70 backdrop-blur">
                   {lookbook && activeProductSanity
-                    ? (pickLocalized(activeProductSanity.tag, lang) ?? "")
-                    : activeProductLocal.tag[lang]}
+                    ? (pickLocalized(activeProductSanity.tag, displayLang) ?? "")
+                    : activeProductLocal.tag[displayLang]}
                 </span>
 
                 <button
@@ -330,8 +380,8 @@ export function HomePage({ lang, content }: { lang: Lang; content?: HomePageCont
                 <div>
                   <h3 className="font-display text-2xl leading-tight">
                     {lookbook && activeProductSanity
-                      ? (pickLocalized(activeProductSanity.name, lang) ?? "")
-                      : activeProductLocal.name[lang]}
+                      ? (pickLocalized(activeProductSanity.name, displayLang) ?? "")
+                      : activeProductLocal.name[displayLang]}
                   </h3>
                   <p className="mt-1 text-xs text-muted-foreground">Handmade · OksiToys</p>
                 </div>
@@ -384,18 +434,18 @@ export function HomePage({ lang, content }: { lang: Lang; content?: HomePageCont
                 <div className="toy-card relative aspect-[4/5] overflow-hidden rounded-3xl bg-secondary shadow-soft transition-[transform,box-shadow] duration-500 hover:-translate-y-1 hover:shadow-cozy md:hover:-translate-y-2 shimmer-on-hover">
                   <img
                     src={p.img}
-                    alt={p.name[lang]}
+                    alt={p.name[displayLang]}
                     className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
                     loading="lazy"
                     decoding="async"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-foreground/40 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                   <span className="absolute left-3 top-3 rounded-full bg-card/90 px-3 py-1 text-[10px] uppercase tracking-widest text-foreground/70 backdrop-blur sm:left-4 sm:top-4">
-                    {p.tag[lang]}
+                    {p.tag[displayLang]}
                   </span>
                   <div className="pointer-events-none absolute -bottom-8 -right-8 h-24 w-24 rounded-full bg-primary/15 blur-2xl opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                 </div>
-                <h3 className="mt-4 font-display text-xl sm:mt-5 sm:text-2xl">{p.name[lang]}</h3>
+                <h3 className="mt-4 font-display text-xl sm:mt-5 sm:text-2xl">{p.name[displayLang]}</h3>
                 <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground sm:text-sm">
                   <span>Handmade · OksiToys</span>
                   <ArrowRight className="h-4 w-4 text-primary transition-transform duration-300 group-hover:translate-x-1" />
@@ -500,10 +550,10 @@ export function HomePage({ lang, content }: { lang: Lang; content?: HomePageCont
               {t.custom.eyebrow}
             </p>
             <h2 className="mx-auto max-w-3xl text-balance font-display text-3xl sm:text-4xl md:text-6xl">
-              {pickLocalized(content?.copy?.customTitle, lang) ?? t.custom.title}
+              {pickLocalized(content?.copy?.customTitle, displayLang) ?? t.custom.title}
             </h2>
             <p className="mx-auto mt-5 max-w-2xl text-base text-muted-foreground sm:mt-6 sm:text-lg">
-              {pickLocalized(content?.copy?.customBody, lang) ?? t.custom.body}
+              {pickLocalized(content?.copy?.customBody, displayLang) ?? t.custom.body}
             </p>
           </div>
 
@@ -550,7 +600,7 @@ export function HomePage({ lang, content }: { lang: Lang; content?: HomePageCont
             className="mx-auto max-w-2xl text-balance text-center font-display text-3xl sm:text-4xl md:text-5xl"
             data-reveal
           >
-            {pickLocalized(content?.copy?.reviewsTitle, lang) ?? t.reviews.title}
+            {pickLocalized(content?.copy?.reviewsTitle, displayLang) ?? t.reviews.title}
           </h2>
           <div className="mt-8 grid gap-3 sm:mt-12 sm:gap-5 md:mt-16 md:grid-cols-3 md:gap-6">
             {(content?.reviews?.filter((r) => r.active !== false) ?? t.reviews.list).map(
@@ -569,7 +619,7 @@ export function HomePage({ lang, content }: { lang: Lang; content?: HomePageCont
                     ))}
                   </div>
                   <blockquote className="text-balance font-display text-lg leading-snug sm:text-xl">
-                    "{pickLocalized(r.quote, lang) ?? r.q}"
+                    "{pickLocalized(r.quote, displayLang) ?? r.q}"
                   </blockquote>
                   <figcaption className="mt-6 text-sm text-muted-foreground">
                     - {r.author ?? r.a}
@@ -656,6 +706,7 @@ export function HomePage({ lang, content }: { lang: Lang; content?: HomePageCont
           </div>
         </div>
       </footer>
+      </main>
     </div>
   );
 }

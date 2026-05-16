@@ -2,9 +2,18 @@ import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Menu, X } from "lucide-react";
 import { dict, langs, langLabel, type Lang } from "@/lib/i18n";
+import { cn } from "@/lib/utils";
 
-export function Header({ lang }: { lang: Lang }) {
-  const t = dict[lang].nav;
+export function Header({
+  lang,
+  displayLang,
+  isSwitching = false,
+}: {
+  lang: Lang;
+  displayLang: Lang;
+  isSwitching?: boolean;
+}) {
+  const t = dict[displayLang].nav;
   const base = lang === "pl" ? "" : `/${lang}`;
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -54,12 +63,15 @@ export function Header({ lang }: { lang: Lang }) {
                 <Link
                   key={l}
                   to={to}
-                  className={
-                    "rounded-full px-2 py-1.5 text-[10px] font-medium tracking-widest transition-colors duration-200 sm:px-3 sm:text-[11px] " +
-                    (active
-                      ? "bg-primary text-primary-foreground shadow-soft"
-                      : "text-muted-foreground hover:text-foreground")
-                  }
+                  resetScroll={true}
+                  aria-disabled={isSwitching}
+                  className={cn(
+                    "lang-pill rounded-full px-2 py-1.5 text-[10px] font-medium tracking-widest sm:px-3 sm:text-[11px]",
+                    active
+                      ? "lang-pill-active bg-primary text-primary-foreground shadow-soft"
+                      : "text-muted-foreground hover:text-foreground",
+                    isSwitching && "pointer-events-none opacity-80",
+                  )}
                 >
                   {langLabel[l]}
                 </Link>

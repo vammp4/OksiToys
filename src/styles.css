@@ -206,7 +206,13 @@
     mix-blend-mode: multiply;
   }
 
+  /* Visible by default; hidden only after JS enables scroll-reveal (prevents blank page on lang switch). */
   [data-reveal] {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  html.reveal-enhanced [data-reveal]:not(.is-visible) {
     opacity: 0;
     transform: translate3d(0, 28px, 0) scale(0.985);
     transition:
@@ -218,9 +224,45 @@
     will-change: opacity, transform;
   }
 
-  [data-reveal].is-visible {
+  html.reveal-enhanced [data-reveal].is-visible {
     opacity: 1;
     transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  .lang-switch-surface {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+    filter: blur(0);
+    transition:
+      opacity 380ms var(--transition-soft),
+      transform 460ms var(--transition-soft),
+      filter 340ms var(--transition-soft);
+    will-change: opacity, transform;
+  }
+
+  .lang-switch-surface.lang-switch-out {
+    opacity: 0;
+    transform: translate3d(0, 14px, 0);
+    filter: blur(4px);
+    pointer-events: none;
+  }
+
+  .lang-switch-surface.lang-switch-entering {
+    opacity: 0;
+    transform: translate3d(0, -10px, 0);
+    filter: blur(2px);
+  }
+
+  .lang-pill {
+    transition:
+      background-color 320ms var(--transition-soft),
+      color 320ms var(--transition-soft),
+      box-shadow 320ms var(--transition-soft),
+      transform 320ms var(--transition-soft);
+  }
+
+  .lang-pill-active {
+    transform: scale(1.04);
   }
 
   .site-header {
@@ -645,7 +687,7 @@
 }
 
 @media (max-width: 767px) {
-  [data-reveal] {
+  html.reveal-enhanced [data-reveal]:not(.is-visible) {
     transform: translate3d(0, 18px, 0) scale(0.99);
     transition-duration: 620ms;
   }
@@ -704,9 +746,11 @@
     opacity: 1 !important;
   }
 
-  [data-reveal] {
+  [data-reveal],
+  .lang-switch-surface {
     opacity: 1 !important;
     transform: none !important;
+    filter: none !important;
     transition: none !important;
   }
 
