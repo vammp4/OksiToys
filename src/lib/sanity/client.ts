@@ -23,4 +23,3 @@ export const sanityClient = createClient({
   useCdn: sanityConfig.useCdn,
   perspective: "published",
 });
-

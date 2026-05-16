@@ -134,15 +134,21 @@ export function HomePage({ lang, content }: { lang: Lang; content?: HomePageCont
       return;
     }
 
+    let frameId: number;
     const handlePointerMove = (event: PointerEvent) => {
-      const rect = hero.getBoundingClientRect();
-      const x = ((event.clientX - rect.left) / rect.width - 0.5) * 2;
-      const y = ((event.clientY - rect.top) / rect.height - 0.5) * 2;
-      hero.style.setProperty("--hero-x", x.toFixed(3));
-      hero.style.setProperty("--hero-y", y.toFixed(3));
+      // Throttle updates to requestAnimationFrame for better performance
+      cancelAnimationFrame(frameId);
+      frameId = requestAnimationFrame(() => {
+        const rect = hero.getBoundingClientRect();
+        const x = ((event.clientX - rect.left) / rect.width - 0.5) * 2;
+        const y = ((event.clientY - rect.top) / rect.height - 0.5) * 2;
+        hero.style.setProperty("--hero-x", x.toFixed(3));
+        hero.style.setProperty("--hero-y", y.toFixed(3));
+      });
     };
 
     const resetPointer = () => {
+      cancelAnimationFrame(frameId);
       hero.style.setProperty("--hero-x", "0");
       hero.style.setProperty("--hero-y", "0");
     };
@@ -151,6 +157,7 @@ export function HomePage({ lang, content }: { lang: Lang; content?: HomePageCont
     hero.addEventListener("pointerleave", resetPointer);
 
     return () => {
+      cancelAnimationFrame(frameId);
       hero.removeEventListener("pointermove", handlePointerMove);
       hero.removeEventListener("pointerleave", resetPointer);
     };
@@ -279,12 +286,16 @@ export function HomePage({ lang, content }: { lang: Lang; content?: HomePageCont
                   key={lookbook ? activeProductSanity?._key : activeProductLocal.img}
                   src={
                     lookbook && activeProductSanity?.image
-                      ? urlForImage(activeProductSanity.image).width(1200).height(800).fit("crop").url()
+                      ? urlForImage(activeProductSanity.image)
+                          .width(1200)
+                          .height(800)
+                          .fit("crop")
+                          .url()
                       : activeProductLocal.img
                   }
                   alt={
                     lookbook && activeProductSanity
-                      ? pickLocalized(activeProductSanity.name, lang) ?? "OksiToys lookbook item"
+                      ? (pickLocalized(activeProductSanity.name, lang) ?? "OksiToys lookbook item")
                       : activeProductLocal.name[lang]
                   }
                   className="mobile-lookbook-image h-64 w-full object-cover"
@@ -293,7 +304,7 @@ export function HomePage({ lang, content }: { lang: Lang; content?: HomePageCont
                 />
                 <span className="absolute left-3 top-3 rounded-full bg-card/90 px-3 py-1 text-[10px] uppercase tracking-widest text-foreground/70 backdrop-blur">
                   {lookbook && activeProductSanity
-                    ? pickLocalized(activeProductSanity.tag, lang) ?? ""
+                    ? (pickLocalized(activeProductSanity.tag, lang) ?? "")
                     : activeProductLocal.tag[lang]}
                 </span>
 
@@ -319,7 +330,7 @@ export function HomePage({ lang, content }: { lang: Lang; content?: HomePageCont
                 <div>
                   <h3 className="font-display text-2xl leading-tight">
                     {lookbook && activeProductSanity
-                      ? pickLocalized(activeProductSanity.name, lang) ?? ""
+                      ? (pickLocalized(activeProductSanity.name, lang) ?? "")
                       : activeProductLocal.name[lang]}
                   </h3>
                   <p className="mt-1 text-xs text-muted-foreground">Handmade · OksiToys</p>
@@ -544,26 +555,26 @@ export function HomePage({ lang, content }: { lang: Lang; content?: HomePageCont
           <div className="mt-8 grid gap-3 sm:mt-12 sm:gap-5 md:mt-16 md:grid-cols-3 md:gap-6">
             {(content?.reviews?.filter((r) => r.active !== false) ?? t.reviews.list).map(
               (r: any, i: number) => (
-              <figure
-                key={r._key ?? i}
-                className="review-card rounded-3xl border border-border/70 bg-card p-5 shadow-soft transition-[transform,box-shadow] duration-500 hover:-translate-y-1 hover:shadow-cozy sm:p-7 md:p-8"
-                data-reveal
-                style={{ transitionDelay: `${i * 90}ms` }}
-              >
-                <div className="mb-4 flex gap-1 text-primary" aria-label="5 stars">
-                  {"★★★★★".split("").map((s, j) => (
-                    <span key={j} className="star-pop" style={{ animationDelay: `${j * 80}ms` }}>
-                      {s}
-                    </span>
-                  ))}
-                </div>
-                <blockquote className="text-balance font-display text-lg leading-snug sm:text-xl">
-                  "{pickLocalized(r.quote, lang) ?? r.q}"
-                </blockquote>
-                <figcaption className="mt-6 text-sm text-muted-foreground">
-                  - {r.author ?? r.a}
-                </figcaption>
-              </figure>
+                <figure
+                  key={r._key ?? i}
+                  className="review-card rounded-3xl border border-border/70 bg-card p-5 shadow-soft transition-[transform,box-shadow] duration-500 hover:-translate-y-1 hover:shadow-cozy sm:p-7 md:p-8"
+                  data-reveal
+                  style={{ transitionDelay: `${i * 90}ms` }}
+                >
+                  <div className="mb-4 flex gap-1 text-primary" aria-label="5 stars">
+                    {"★★★★★".split("").map((s, j) => (
+                      <span key={j} className="star-pop" style={{ animationDelay: `${j * 80}ms` }}>
+                        {s}
+                      </span>
+                    ))}
+                  </div>
+                  <blockquote className="text-balance font-display text-lg leading-snug sm:text-xl">
+                    "{pickLocalized(r.quote, lang) ?? r.q}"
+                  </blockquote>
+                  <figcaption className="mt-6 text-sm text-muted-foreground">
+                    - {r.author ?? r.a}
+                  </figcaption>
+                </figure>
               ),
             )}
           </div>
