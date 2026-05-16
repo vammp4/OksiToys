@@ -4,7 +4,7 @@ import { fetchHomePage } from "@/lib/sanity/queries";
 
 export const Route = createFileRoute("/")({
   loader: async () => ({ content: await fetchHomePage() }),
-  component: () => <HomePage lang="pl" content={Route.useLoaderData().content} />,
+  component: HomeRoute,
   head: () => ({
     meta: [
       { title: "OksiToys Amigurumi - Recznie robione szydelkowe maskotki" },
@@ -22,3 +22,8 @@ export const Route = createFileRoute("/")({
     ],
   }),
 });
+
+function HomeRoute() {
+  const { content } = Route.useLoaderData();
+  return <HomePage lang="pl" content={content} />;
+}

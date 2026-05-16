@@ -8,3 +8,7 @@
 ## 2026-05-16 - Modern image formats and CDN preconnecting
 **Learning:** Serving images in modern formats like WebP or AVIF can significantly reduce payload size without quality loss. Preconnecting to image CDNs reduces the latency of the initial request by performing DNS/TLS handshakes early.
 **Action:** Use `.auto('format')` in Sanity's image builder and add `<link rel="preconnect" href="https://cdn.sanity.io" />` to the document head.
+
+## 2026-05-16 - Avoiding layout flashes and improving reactivity
+**Learning:** In TanStack Start, anonymous component functions in route definitions can lead to unnecessary remounts or missed updates. Using named components and ensuring layout-level styles are applied consistently prevents the "white flash" during navigation.
+**Action:** Always use named components in route definitions and apply global backgrounds to the main component container instead of relying solely on the body tag.

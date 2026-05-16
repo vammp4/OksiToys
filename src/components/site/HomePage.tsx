@@ -164,7 +164,7 @@ export function HomePage({ lang, content }: { lang: Lang; content?: HomePageCont
   }, []);
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-gradient-warm">
       <Header lang={lang} />
 
       <section ref={heroRef} className="hero-motion relative overflow-hidden">
