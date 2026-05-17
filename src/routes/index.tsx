@@ -25,5 +25,5 @@ export const Route = createFileRoute("/")({
 
 function HomeRoute() {
   const { content } = Route.useLoaderData();
-  return <HomePage lang="pl" content={content} />;
+  return <HomePage key="pl" lang="pl" content={content} />;
 }

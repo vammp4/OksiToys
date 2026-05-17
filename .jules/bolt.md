@@ -12,3 +12,7 @@
 ## 2026-05-16 - Avoiding layout flashes and improving reactivity
 **Learning:** In TanStack Start, anonymous component functions in route definitions can lead to unnecessary remounts or missed updates. Using named components and ensuring layout-level styles are applied consistently prevents the "white flash" during navigation.
 **Action:** Always use named components in route definitions and apply global backgrounds to the main component container instead of relying solely on the body tag.
+
+## 2026-05-17 - Solving white flashes and visibility jank
+**Learning:** In highly animated sites, switching routes can cause elements to reset to an invisible state if their reveal logic doesn't account for the transition. Additionally, relying on route-level components for global backgrounds can cause "white flashes" if the layout isn't painted before the component mounts.
+**Action:** Move global background styles to the root layout shell and ensure scroll-reveal hooks are reactive to language and content changes.

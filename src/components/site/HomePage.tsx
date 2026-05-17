@@ -77,7 +77,7 @@ const products = [
 
 type HomePageContent = Awaited<ReturnType<typeof fetchHomePage>>;
 
-function useScrollReveal() {
+function useScrollReveal(dependencies: any[] = []) {
   useEffect(() => {
     const elements = Array.from(document.querySelectorAll<HTMLElement>("[data-reveal]"));
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -101,7 +101,7 @@ function useScrollReveal() {
 
     elements.forEach((element) => observer.observe(element));
     return () => observer.disconnect();
-  }, []);
+  }, dependencies);
 }
 
 export function HomePage({ lang, content }: { lang: Lang; content?: HomePageContent | null }) {
@@ -124,7 +124,7 @@ export function HomePage({ lang, content }: { lang: Lang; content?: HomePageCont
     setActiveProductIndex((current) => (current === length - 1 ? 0 : current + 1));
   };
 
-  useScrollReveal();
+  useScrollReveal([lang, content]);
 
   useEffect(() => {
     const hero = heroRef.current;

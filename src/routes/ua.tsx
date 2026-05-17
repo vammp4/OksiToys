@@ -25,5 +25,5 @@ export const Route = createFileRoute("/ua")({
 
 function UaHomeRoute() {
   const { content } = Route.useLoaderData();
-  return <HomePage lang="ua" content={content} />;
+  return <HomePage key="ua" lang="ua" content={content} />;
 }
